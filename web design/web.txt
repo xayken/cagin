@@ -1,0 +1,217 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace EstateManagement
+{
+    public class Person
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        public string Email { get; set; }
+    }
+
+    public class Block
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class Flat
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int BlockId { get; set; }
+    }
+
+    public class PersonFlat
+    {
+        public int Id { get; set; }
+        public int PersonId { get; set; }
+        public int FlatId { get; set; }
+        public bool IsOwner { get; set; }
+    }
+
+    public class Expense
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public bool IsAssignedToOwner { get; set; }
+    }
+
+    public class PersonExpense
+    {
+        public int Id { get; set; }
+        public int PersonFlatId { get; set; }
+        public int ExpenseId { get; set; }
+        public DateTime Date { get; set; }
+        public DateTime DueDate { get; set; }
+        public decimal Amount { get; set; }
+    }
+
+    public class EstateManagementContext
+    {
+        public List<Person> Persons { get; set; } = new List<Person>();
+        public List<Block> Blocks { get; set; } = new List<Block>();
+        public List<Flat> Flats { get; set; } = new List<Flat>();
+        public List<PersonFlat> PersonFlats { get; set; } = new List<PersonFlat>();
+        public List<Expense> Expenses { get; set; } = new List<Expense>();
+        public List<PersonExpense> PersonExpenses { get; set; } = new List<PersonExpense>();
+    }
+
+    public class EstateManagementRepository
+    {
+        private readonly EstateManagementContext _context;
+
+        public EstateManagementRepository(EstateManagementContext context)
+        {
+            _context = context;
+        }
+
+public decimal GetInstantPaymentAmount(int personId)
+{
+    decimal totalAmount = 0;
+    var personExpenses = _context.PersonExpenses
+        .Where(pe => pe.PersonFlatId == personId && pe.DueDate < DateTime.Now)
+        .ToList();
+
+    foreach (var personExpense in personExpenses)
+    {
+        var expense = _context.Expenses.FirstOrDefault(e => e.Id == personExpense.ExpenseId);
+        if (expense == null) continue;
+
+        var personFlat = _context.PersonFlats.FirstOrDefault(pf => pf.Id == personExpense.PersonFlatId);
+        if (personFlat == null) continue;
+
+        if (expense.IsAssignedToOwner)
+        {
+            if (personFlat.IsOwner)
+            {
+                totalAmount += personExpense.Amount;
+            }
+        }
+        else
+        {
+            totalAmount += personExpense.Amount / _context.PersonFlats
+                .Count(pf => pf.FlatId == personFlat.FlatId);
+        }
+    }
+
+    return totalAmount;
+}
+
+
+  if (expense.IsAssignedToOwner)
+                {
+                    if (personFlat.IsOwner)
+                    {
+                        totalAmount += personExpense.Amount;
+                    }
+                }
+                else
+                {
+                    totalAmount += personExpense.Amount / _context.PersonFlats.Count(pf => pf.FlatId == personFlat.FlatId);
+                }
+            }
+
+            return totalAmount;
+        }
+    }
+}
+
+if (expense.IsAssignedToOwner)
+{
+var personFlat = _context.PersonFlats.FirstOrDefault(pf => pf.Id == personExpense.PersonFlatId);
+if (personFlat == null) continue;
+
+ if (personFlat.IsOwner)
+                {
+                    totalAmount += personExpense.Amount;
+                }
+            }
+            else
+            {
+                totalAmount += personExpense.Amount / _context.PersonFlats
+                    .Count(pf => pf.FlatId == personFlat.FlatId);
+            }
+        }
+
+        return totalAmount;
+    }
+}
+
+
+
+public decimal GetFuturePaymentAmount(int personId)
+{
+decimal totalAmount = 0;
+var personExpenses = _context.PersonExpenses
+.Where(pe => pe.PersonFlatId == personId && pe.DueDate >= DateTime.Now)
+.ToList();
+
+foreach (var personExpense in personExpenses)
+{
+    var expense = _context.Expenses.FirstOrDefault(e => e.Id == personExpense.ExpenseId);
+    if (expense == null) continue;
+
+    var personFlat = _context.PersonFlats.FirstOrDefault(pf => pf.Id == personExpense.PersonFlatId);
+    if (personFlat == null) continue;
+
+    var person = _context.Persons.FirstOrDefault(p => p.Id == personFlat.PersonId);
+    if (person == null) continue;
+
+    if (expense.IsAssignedToOwner && personFlat.IsOwner)
+    {
+        totalAmount += personExpense.Amount;
+    }
+}
+return totalAmount;
+
+}
+
+public List<Expense> GetExpensesByPersonId(int personId)
+{
+var personFlats = _context.PersonFlats
+.Where(pf => pf.PersonId == personId)
+.Select(pf => pf.Id)
+.ToList();
+
+var expenses = _context.PersonExpenses
+    .Where(pe => personFlats.Contains(pe.PersonFlatId))
+    .Select(pe => pe.ExpenseId)
+    .ToList();
+
+return _context.Expenses
+    .Where(e => expenses.Contains(e.Id))
+    .ToList();
+
+}
+}
+}
+
+var ownerExpenses = _context.Expenses.Where(e => e.IsAssignedToOwner).ToList();
+var personFlats = _context.PersonFlats.Where(pf => pf.PersonId == personId).ToList();
+
+foreach (var personFlat in personFlats)
+{
+    var flat = _context.Flats.FirstOrDefault(f => f.Id == personFlat.FlatId);
+    if (flat == null) continue;
+
+    if (personFlat.IsOwner)
+    {
+        totalAmount += ownerExpenses.Sum(o => o.Amount);
+    }
+    else
+    {
+        foreach (var personExpense in personExpenses)
+        {
+            var expense = _context.Expenses.FirstOrDefault(e => e.Id == personExpense.ExpenseId);
+            if (expense == null) continue;
+
+            totalAmount += personExpense.Amount;
+        }
+    }
+}
+
+return totalAmount;
