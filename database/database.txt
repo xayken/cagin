@@ -1,0 +1,64 @@
+CREATE TABLE Person (
+  ID int, 
+  Name nvarchar(255) ,
+  Surname nvarchar(255) ,
+  Email nvarchar(255) ,
+  Role ENUM('landlord', 'tenant') NOT NULL
+PRIMARY KEY(ID)
+);
+
+CREATE TABLE Block (
+  ID int,
+  Name nvarchar(50)
+PRIMARY KEY(ID)
+);
+
+CREATE TABLE Apartment (
+  ID int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  Name nvarchar(50),
+  BlockId int, 
+  OwnerId int,
+PRIMARY KEY(ID)
+ 
+ 
+);
+
+CREATE TABLE Expense (
+  ID int,
+  Name varchar(255)
+  Amount decimal(10,2) 
+  DueDate date 
+PRIMARY KEY(ID)
+);
+
+
+CREATE TABLE PersonExpense (
+  ID int,
+  PersonID int, ,
+  ExpenseID int ,
+  PaymentDate date ,
+  PaymentAmount decimal(10,2) ,
+  PenaltyAmount decimal(10,2) ,
+  
+PRIMARY KEY(ID)
+);
+
+
+
+
+
+SELECT 
+  p.ID, 
+  p.Name, 
+  p.Surname, 
+  pe.Amount, 
+  pe.DueDate, 
+  IF(pe.DueDate < CURRENT_DATE(), pe.Amount * 0.05, 0) AS Penalty 
+FROM 
+  Person p 
+  JOIN PersonExpense pe ON p.ID = pe.PersonID 
+  JOIN Expense e ON pe.ExpenseID = e.ID 
+WHERE 
+  pe.DueDate = 'YOUR_SPECIFIED_DUE_DATE' 
+  AND pe.Amount IS NOT NULL 
+  AND pe.PaymentDate IS NULL
